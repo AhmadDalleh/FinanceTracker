@@ -1,4 +1,5 @@
 using Application.Common.Interfaces;
+using Domain.Entities;
 using Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
@@ -15,4 +16,7 @@ public class CategoryRepository : ICategoryRepository
 
     public Task<bool> ExistsAsync(Guid id, string userId, CancellationToken cancellationToken) =>
         _context.Categories.AnyAsync(c => c.Id == id && c.UserId == userId, cancellationToken);
+
+    public async Task AddAsync(Category category, CancellationToken cancellationToken) =>
+        await _context.Categories.AddAsync(category, cancellationToken);
 }

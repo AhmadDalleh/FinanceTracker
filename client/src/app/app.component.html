@@ -1,5 +1,11 @@
-<main>
-  <h1>{{ title }}</h1>
-</main>
+<header class="app-header">
+  <div class="app-header-inner">
+    <span class="brand">{{ title }}</span>
+    <nav>
+      <a routerLink="/accounts" routerLinkActive="active">Accounts</a>
+      <a routerLink="/transactions" routerLinkActive="active">Transactions</a>
+    </nav>
+  </div>
+</header>
 
 <router-outlet />
