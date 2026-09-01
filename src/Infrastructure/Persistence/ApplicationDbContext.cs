@@ -12,8 +12,12 @@ public class ApplicationDbContext : DbContext, IApplicationDbContext
     }
 
     public DbSet<Account> Accounts => Set<Account>();
+    public DbSet<Category> Categories => Set<Category>();
+    public DbSet<Transaction> Transactions => Set<Transaction>();
 
     IQueryable<Account> IApplicationDbContext.Accounts => Accounts;
+    IQueryable<Category> IApplicationDbContext.Categories => Categories;
+    IQueryable<Transaction> IApplicationDbContext.Transactions => Transactions;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

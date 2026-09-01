@@ -5,6 +5,8 @@ namespace Application.Common.Interfaces;
 public interface IApplicationDbContext
 {
     IQueryable<Account> Accounts { get; }
+    IQueryable<Category> Categories { get; }
+    IQueryable<Transaction> Transactions { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken);
 }
