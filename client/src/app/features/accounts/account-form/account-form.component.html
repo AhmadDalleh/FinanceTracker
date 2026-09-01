@@ -1,0 +1,51 @@
+<section class="page">
+  <header class="page-header">
+    <h1>{{ isEditMode() ? 'Edit Account' : 'New Account' }}</h1>
+    <a routerLink="/accounts" class="btn">Back to Accounts</a>
+  </header>
+
+  @if (error()) {
+    <p class="error">{{ error() }}</p>
+  }
+
+  <form class="form" [formGroup]="form" (ngSubmit)="save()">
+    <div class="form-field">
+      <label for="name">Name</label>
+      <input id="name" type="text" formControlName="name" />
+      @if (form.controls.name.invalid && form.controls.name.touched) {
+        <span class="field-error">Name is required.</span>
+      }
+    </div>
+
+    <div class="form-field">
+      <label for="type">Type</label>
+      <select id="type" formControlName="type">
+        @for (option of accountTypes; track option.value) {
+          <option [value]="option.value">{{ option.label }}</option>
+        }
+      </select>
+    </div>
+
+    <div class="form-field">
+      <label for="startingBalance">{{ isEditMode() ? 'Balance' : 'Starting Balance' }}</label>
+      <input id="startingBalance" type="number" step="0.01" formControlName="startingBalance" />
+      @if (form.controls.startingBalance.invalid && form.controls.startingBalance.touched) {
+        <span class="field-error">Balance cannot be negative.</span>
+      }
+    </div>
+
+    <div class="form-field">
+      <label for="currency">Currency</label>
+      <input id="currency" type="text" maxlength="3" formControlName="currency" />
+      @if (form.controls.currency.invalid && form.controls.currency.touched) {
+        <span class="field-error">Currency must be a 3-letter code (e.g. USD).</span>
+      }
+    </div>
+
+    <div class="form-actions">
+      <button type="submit" class="btn btn-primary" [disabled]="saving()">
+        {{ saving() ? 'Saving…' : 'Save' }}
+      </button>
+    </div>
+  </form>
+</section>

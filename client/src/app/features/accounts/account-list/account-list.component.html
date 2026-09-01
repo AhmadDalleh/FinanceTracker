@@ -1,0 +1,40 @@
+<section class="page">
+  <header class="page-header">
+    <h1>Accounts</h1>
+    <a routerLink="/accounts/new" class="btn btn-primary">New Account</a>
+  </header>
+
+  @if (error()) {
+    <p class="error">{{ error() }}</p>
+  }
+
+  @if (loading()) {
+    <p>Loading&hellip;</p>
+  } @else if (accounts().length === 0) {
+    <p class="empty">No accounts yet. Create your first one to get started.</p>
+  } @else {
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th class="numeric">Balance</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (account of accounts(); track account.id) {
+          <tr>
+            <td>{{ account.name }}</td>
+            <td>{{ accountTypeLabels[account.type] }}</td>
+            <td class="numeric">{{ account.balance | number: '1.2-2' }} {{ account.currency }}</td>
+            <td class="actions">
+              <a [routerLink]="['/accounts', account.id, 'edit']">Edit</a>
+              <button type="button" class="link-button" (click)="archive(account)">Archive</button>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  }
+</section>
