@@ -1,10 +1,10 @@
 <Solution>
   <Folder Name="/Solution Items/">
-    <File Path="../../../Downloads/ci.yml" />
-    <File Path="../../../Downloads/CLAUDE.md" />
-    <File Path="../../../Downloads/FEATURES.md" />
-    <File Path="../../../Downloads/gitignore" />
-    <File Path="../../../Downloads/USER_STORIES.md" />
+    <File Path=".github/workflows/ci.yml" />
+    <File Path="CLAUDE.md" />
+    <File Path="FEATURES.md" />
+    <File Path=".gitignore" />
+    <File Path="USER_STORIES.md" />
     <File Path=".editorconfig" />
   </Folder>
 </Solution>
