@@ -97,6 +97,23 @@ The API needs a Postgres database and a JWT signing key to run. Neither is commi
 
 This is for local development only — real environments should get both values from proper secrets management (Key Vault, environment variables, etc.), never a checked-in file.
 
+### CORS & observability
+
+`Cors:AllowedOrigins` (in `appsettings.json`) defaults to `http://localhost:4200` for local dev. **Every non-Development deployment must override it** with the real frontend origin — otherwise the browser will reject every API call. Override via an environment variable rather than a committed file:
+
+```bash
+Cors__AllowedOrigins__0=https://your-frontend-domain.example.com
+```
+
+If this isn't set, the API logs a warning on startup (visible wherever your host collects logs) rather than failing silently.
+
+Two health check endpoints are available for load balancers / orchestrators:
+
+- `GET /health/live` — process is up, no dependency checks (liveness probe)
+- `GET /health/ready` — also checks the database connection (readiness probe)
+
+Every request is logged (method, path, status code, duration) via ASP.NET Core's built-in HTTP logging — no request/response bodies or headers are logged, so this is safe to leave on in production.
+
 ## Features
 
 MVP (v1) scope covers:
