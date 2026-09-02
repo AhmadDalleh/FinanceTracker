@@ -1,3 +1,4 @@
+using Application.Common.Extensions;
 using Application.Common.Interfaces;
 using Application.Common.Models;
 using AutoMapper;
@@ -21,9 +22,7 @@ public class GetTransactionsQueryHandler : IRequestHandler<GetTransactionsQuery,
 
     public Task<PaginatedList<TransactionDto>> Handle(GetTransactionsQuery request, CancellationToken cancellationToken)
     {
-        var ownedAccountIds = _context.Accounts
-            .Where(a => a.UserId == _currentUserService.UserId)
-            .Select(a => a.Id);
+        var ownedAccountIds = _context.OwnedAccountIds(_currentUserService.UserId);
 
         var query = _context.Transactions.Where(t => ownedAccountIds.Contains(t.AccountId));
 

@@ -3,16 +3,20 @@ using System.Net.Http.Json;
 using Application.Features.Accounts;
 using Application.Features.Accounts.Commands.CreateAccount;
 using Domain.Enums;
+using Infrastructure.Persistence;
+using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 
 namespace Api.FunctionalTests.Controllers;
 
 public class AccountsControllerTests : IClassFixture<CustomWebApplicationFactory>
 {
+    private readonly CustomWebApplicationFactory _factory;
     private readonly HttpClient _client;
 
     public AccountsControllerTests(CustomWebApplicationFactory factory)
     {
+        _factory = factory;
         _client = factory.CreateClient();
         factory.EnsureDatabaseCreated();
     }
@@ -76,5 +80,60 @@ public class AccountsControllerTests : IClassFixture<CustomWebApplicationFactory
         var response = await _client.GetAsync($"/api/Accounts/{Guid.NewGuid()}");
 
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Create_SetsCreatedAtAndCreatedByViaTheAuditInterceptor()
+    {
+        var command = new CreateAccountCommand
+        {
+            Name = "Audited Account",
+            Type = AccountType.Checking,
+            StartingBalance = 0m,
+            Currency = "USD"
+        };
+
+        var response = await _client.PostAsJsonAsync("/api/Accounts", command);
+        var id = await response.Content.ReadFromJsonAsync<Guid>();
+
+        using var scope = _factory.Services.CreateScope();
+        var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        var account = await context.Accounts.FindAsync(id);
+
+        Assert.NotNull(account);
+        Assert.True(account!.CreatedAt > DateTimeOffset.UnixEpoch);
+        Assert.Equal(TestAuthHandler.TestUserId, account.CreatedBy);
+        Assert.Equal(account.CreatedAt, account.UpdatedAt);
+        Assert.Equal(TestAuthHandler.TestUserId, account.UpdatedBy);
+    }
+
+    [Fact]
+    public async Task Update_SetsUpdatedAtViaTheAuditInterceptor()
+    {
+        var createResponse = await _client.PostAsJsonAsync("/api/Accounts", new CreateAccountCommand
+        {
+            Name = "Before Rename",
+            Type = AccountType.Checking,
+            StartingBalance = 0m,
+            Currency = "USD"
+        });
+        var id = await createResponse.Content.ReadFromJsonAsync<Guid>();
+
+        var updateResponse = await _client.PutAsJsonAsync($"/api/Accounts/{id}", new
+        {
+            Id = id,
+            Name = "After Rename",
+            Type = AccountType.Checking
+        });
+        Assert.Equal(HttpStatusCode.NoContent, updateResponse.StatusCode);
+
+        using var scope = _factory.Services.CreateScope();
+        var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        var account = await context.Accounts.FindAsync(id);
+
+        Assert.NotNull(account);
+        Assert.NotNull(account!.UpdatedAt);
+        Assert.True(account.UpdatedAt >= account.CreatedAt);
+        Assert.Equal(TestAuthHandler.TestUserId, account.UpdatedBy);
     }
 }

@@ -1,4 +1,5 @@
 using Application.Common.Exceptions;
+using Application.Common.Extensions;
 using Application.Common.Interfaces;
 using AutoMapper;
 using AutoMapper.QueryableExtensions;
@@ -23,9 +24,7 @@ public class GetTransactionByIdQueryHandler : IRequestHandler<GetTransactionById
 
     public async Task<TransactionDto> Handle(GetTransactionByIdQuery request, CancellationToken cancellationToken)
     {
-        var ownedAccountIds = _context.Accounts
-            .Where(a => a.UserId == _currentUserService.UserId)
-            .Select(a => a.Id);
+        var ownedAccountIds = _context.OwnedAccountIds(_currentUserService.UserId);
 
         var transaction = await _context.Transactions
             .Where(t => t.Id == request.Id && ownedAccountIds.Contains(t.AccountId))

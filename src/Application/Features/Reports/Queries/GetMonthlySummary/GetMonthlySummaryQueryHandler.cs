@@ -1,3 +1,4 @@
+using Application.Common.Extensions;
 using Application.Common.Interfaces;
 using Domain.Enums;
 using MediatR;
@@ -21,9 +22,7 @@ public class GetMonthlySummaryQueryHandler : IRequestHandler<GetMonthlySummaryQu
         var monthStart = new DateOnly(request.Year, request.Month, 1);
         var monthEnd = monthStart.AddMonths(1).AddDays(-1);
 
-        var ownedAccountIds = _context.Accounts
-            .Where(a => a.UserId == _currentUserService.UserId)
-            .Select(a => a.Id);
+        var ownedAccountIds = _context.OwnedAccountIds(_currentUserService.UserId);
 
         var totals = await _context.Transactions
             .Where(t => ownedAccountIds.Contains(t.AccountId) && t.Date >= monthStart && t.Date <= monthEnd)
