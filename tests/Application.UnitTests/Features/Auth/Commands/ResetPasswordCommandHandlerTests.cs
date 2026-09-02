@@ -39,7 +39,7 @@ public class ResetPasswordCommandHandlerTests
         {
             Id = Guid.NewGuid(),
             UserId = user.Id,
-            TokenHash = PasswordResetTokenHasher.Hash("raw-token"),
+            TokenHash = SecureTokenHasher.Hash("raw-token"),
             ExpiresAt = _now.AddHours(1),
             CreatedAt = _now
         };
@@ -87,7 +87,7 @@ public class ResetPasswordCommandHandlerTests
         {
             Id = Guid.NewGuid(),
             UserId = user.Id,
-            TokenHash = PasswordResetTokenHasher.Hash("raw-token"),
+            TokenHash = SecureTokenHasher.Hash("raw-token"),
             ExpiresAt = _now.AddHours(-1),
             CreatedAt = _now.AddHours(-2)
         };
@@ -107,7 +107,7 @@ public class ResetPasswordCommandHandlerTests
         {
             Id = Guid.NewGuid(),
             UserId = Guid.NewGuid(),
-            TokenHash = PasswordResetTokenHasher.Hash("raw-token"),
+            TokenHash = SecureTokenHasher.Hash("raw-token"),
             ExpiresAt = _now.AddHours(1),
             CreatedAt = _now
         };

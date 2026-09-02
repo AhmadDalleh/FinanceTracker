@@ -10,13 +10,23 @@ namespace Application.UnitTests.Features.Auth.Commands;
 public class LoginCommandHandlerTests
 {
     private readonly Mock<IUserRepository> _userRepository = new();
+    private readonly Mock<IRefreshTokenRepository> _refreshTokenRepository = new();
+    private readonly Mock<IApplicationDbContext> _context = new();
     private readonly Mock<IPasswordHasher> _passwordHasher = new();
     private readonly Mock<IJwtTokenGenerator> _jwtTokenGenerator = new();
+    private readonly Mock<IDateTimeProvider> _dateTimeProvider = new();
     private readonly LoginCommandHandler _handler;
 
     public LoginCommandHandlerTests()
     {
-        _handler = new LoginCommandHandler(_userRepository.Object, _passwordHasher.Object, _jwtTokenGenerator.Object);
+        _dateTimeProvider.Setup(p => p.UtcNow).Returns(DateTimeOffset.UtcNow);
+        _handler = new LoginCommandHandler(
+            _userRepository.Object,
+            _refreshTokenRepository.Object,
+            _context.Object,
+            _passwordHasher.Object,
+            _jwtTokenGenerator.Object,
+            _dateTimeProvider.Object);
     }
 
     private static User CreateUser() => new()
@@ -32,7 +42,7 @@ public class LoginCommandHandlerTests
         var user = CreateUser();
         _userRepository.Setup(r => r.GetByEmailAsync("user@example.com", It.IsAny<CancellationToken>())).ReturnsAsync(user);
         _passwordHasher.Setup(h => h.Verify("hashed-password", "Password1")).Returns(true);
-        var expiresAt = DateTimeOffset.UtcNow.AddHours(8);
+        var expiresAt = DateTimeOffset.UtcNow.AddMinutes(15);
         _jwtTokenGenerator.Setup(g => g.GenerateToken(user)).Returns(("token", expiresAt));
 
         var result = await _handler.Handle(
@@ -41,6 +51,8 @@ public class LoginCommandHandlerTests
 
         Assert.Equal("token", result.Token);
         Assert.Equal(user.Id, result.UserId);
+        Assert.False(string.IsNullOrWhiteSpace(result.RefreshToken));
+        _refreshTokenRepository.Verify(r => r.AddAsync(It.IsAny<RefreshToken>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]

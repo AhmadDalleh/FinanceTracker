@@ -10,6 +10,7 @@ public interface IApplicationDbContext
     IQueryable<Budget> Budgets { get; }
     IQueryable<User> Users { get; }
     IQueryable<PasswordResetToken> PasswordResetTokens { get; }
+    IQueryable<RefreshToken> RefreshTokens { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken);
 }

@@ -32,7 +32,7 @@ public class ResetPasswordCommandHandler : IRequestHandler<ResetPasswordCommand>
         var email = request.Email.Trim().ToLowerInvariant();
         var user = await _userRepository.GetByEmailAsync(email, cancellationToken);
 
-        var tokenHash = PasswordResetTokenHasher.Hash(request.Token);
+        var tokenHash = SecureTokenHasher.Hash(request.Token);
         var token = await _tokenRepository.GetValidTokenByHashAsync(tokenHash, cancellationToken);
 
         if (user is null || token is null || token.UserId != user.Id || token.ExpiresAt < _dateTimeProvider.UtcNow)
