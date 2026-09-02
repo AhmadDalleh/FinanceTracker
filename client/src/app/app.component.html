@@ -1,10 +1,21 @@
 <header class="app-header">
   <div class="app-header-inner">
     <span class="brand">{{ title }}</span>
-    <nav>
-      <a routerLink="/accounts" routerLinkActive="active">Accounts</a>
-      <a routerLink="/transactions" routerLinkActive="active">Transactions</a>
-    </nav>
+    @if (authService.isAuthenticated()) {
+      <nav>
+        <a routerLink="/accounts" routerLinkActive="active">Accounts</a>
+        <a routerLink="/transactions" routerLinkActive="active">Transactions</a>
+      </nav>
+      <div class="account-controls">
+        <span class="current-email">{{ authService.currentEmail() }}</span>
+        <button type="button" class="link-button" (click)="logout()">Log Out</button>
+      </div>
+    } @else {
+      <nav>
+        <a routerLink="/login" routerLinkActive="active">Log In</a>
+        <a routerLink="/register" routerLinkActive="active">Register</a>
+      </nav>
+    }
   </div>
 </header>
 

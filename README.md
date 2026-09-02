@@ -73,6 +73,30 @@ dotnet ef migrations add <Name> --project src/Infrastructure --startup-project s
 dotnet ef database update --project src/Infrastructure --startup-project src/Api
 ```
 
+### Local database setup
+
+The API needs a Postgres database and a JWT signing key to run. Neither is committed (`appsettings.json` intentionally ships empty placeholders for both — they're secrets), so each developer configures their own via `src/Api/appsettings.Development.json`, which is gitignored.
+
+1. Create a dedicated database and role (using any local Postgres install, e.g. `psql -U postgres`):
+   ```sql
+   CREATE ROLE financetracker WITH LOGIN PASSWORD 'choose-a-local-password';
+   CREATE DATABASE financetracker OWNER financetracker;
+   ```
+2. Create `src/Api/appsettings.Development.json` (if it doesn't already exist) with:
+   ```json
+   {
+     "ConnectionStrings": {
+       "DefaultConnection": "Host=localhost;Port=5432;Database=financetracker;Username=financetracker;Password=choose-a-local-password"
+     },
+     "Jwt": {
+       "Key": "any-sufficiently-long-random-string-for-local-dev"
+     }
+   }
+   ```
+3. Apply migrations (see above), then `dotnet run --project src/Api`.
+
+This is for local development only — real environments should get both values from proper secrets management (Key Vault, environment variables, etc.), never a checked-in file.
+
 ## Features
 
 MVP (v1) scope covers:

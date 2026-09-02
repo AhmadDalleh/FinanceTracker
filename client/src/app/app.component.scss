@@ -19,6 +19,7 @@
 nav {
   display: flex;
   gap: 1.25rem;
+  flex: 1;
 }
 
 nav a {
@@ -30,4 +31,15 @@ nav a {
 nav a.active {
   color: var(--color-primary);
   font-weight: 600;
+}
+
+.account-controls {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.current-email {
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
 }

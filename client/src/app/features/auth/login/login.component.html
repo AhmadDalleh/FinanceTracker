@@ -1,0 +1,35 @@
+<section class="page auth-page">
+  <h1>Log In</h1>
+
+  @if (passwordResetSuccess()) {
+    <p class="success">Your password has been reset. Log in with your new password.</p>
+  }
+
+  @if (error()) {
+    <p class="error">{{ error() }}</p>
+  }
+
+  <form class="form" [formGroup]="form" (ngSubmit)="submit()">
+    <div class="form-field">
+      <label for="email">Email</label>
+      <input id="email" type="email" formControlName="email" autocomplete="email" />
+      @if (form.controls.email.invalid && form.controls.email.touched) {
+        <span class="field-error">Enter a valid email address.</span>
+      }
+    </div>
+
+    <div class="form-field">
+      <label for="password">Password</label>
+      <input id="password" type="password" formControlName="password" autocomplete="current-password" />
+      <a class="forgot-link" routerLink="/forgot-password">Forgot password?</a>
+    </div>
+
+    <div class="form-actions">
+      <button type="submit" class="btn btn-primary" [disabled]="submitting()">
+        {{ submitting() ? 'Logging in…' : 'Log In' }}
+      </button>
+    </div>
+  </form>
+
+  <p class="auth-switch">Don't have an account? <a routerLink="/register">Register</a></p>
+</section>
