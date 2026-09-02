@@ -9,7 +9,8 @@ Follow-up project after a prior Link Shortener (Minimal API + EF Core + PostgreS
 - **Backend:** ASP.NET Core Web API (Controllers, not Minimal API), MediatR (CQRS), FluentValidation, AutoMapper, EF Core, PostgreSQL
 - **Frontend:** Angular (`client/`)
 - **Testing:** xUnit, Testcontainers + PostgreSQL for integration tests
-- **CI:** GitHub Actions (build/test backend, build/lint frontend, on push/PR to `main`)
+- **CI:** GitHub Actions (build/test backend, build/lint frontend, Docker image builds, on push/PR to `master`)
+- **Hosting:** Railway (API + Angular/nginx + Postgres, deployed from Dockerfiles) — see [Deployment](#deployment-railway)
 
 ## Architecture
 
@@ -114,6 +115,62 @@ Two health check endpoints are available for load balancers / orchestrators:
 
 Every request is logged (method, path, status code, duration) via ASP.NET Core's built-in HTTP logging — no request/response bodies or headers are logged, so this is safe to leave on in production.
 
+## Deployment (Railway)
+
+The app deploys as **three Railway resources** in one project: a Postgres database, the API, and the Angular app. The Angular container's nginx serves the static files *and* reverse-proxies `/api/*` to the API over Railway's private network — the browser only ever talks to one public origin, so there's no CORS to configure for the deployed app itself (the `Cors:AllowedOrigins` setting from the section above still exists as a fallback for anyone hitting the API directly).
+
+### 1. Database
+
+In the Railway project: **New → Database → PostgreSQL**. No configuration needed — Railway exposes `PGHOST`/`PGPORT`/`PGDATABASE`/`PGUSER`/`PGPASSWORD` variables that the API service references below.
+
+### 2. API service
+
+**New → GitHub Repo** → select this repo.
+
+- **Root Directory:** `.` (repo root — the Dockerfile needs the whole solution as build context)
+- **Dockerfile Path:** `src/Api/Dockerfile`
+- **Healthcheck Path:** `/health/ready`
+- **Variables** (Railway's `${{ServiceName.VAR}}` syntax reaches into the Postgres service; replace `Postgres` with whatever you named that service):
+  ```
+  ASPNETCORE_ENVIRONMENT=Production
+  ConnectionStrings__DefaultConnection=Host=${{Postgres.PGHOST}};Port=${{Postgres.PGPORT}};Database=${{Postgres.PGDATABASE}};Username=${{Postgres.PGUSER}};Password=${{Postgres.PGPASSWORD}}
+  Jwt__Key=<generate a long random secret - e.g. `openssl rand -base64 48`>
+  Jwt__Issuer=FinanceTracker
+  Jwt__Audience=FinanceTracker
+  Jwt__AccessTokenMinutes=15
+  App__ClientBaseUrl=https://<your-web-service>.up.railway.app
+  Cors__AllowedOrigins__0=https://<your-web-service>.up.railway.app
+  ```
+- In **Settings → Networking**, note the service's private domain (defaults to the service name, e.g. `api.railway.internal`) — the web service needs it next.
+
+### 3. Web service (Angular)
+
+**New → GitHub Repo** → same repo again, as a second service.
+
+- **Root Directory:** `client`
+- **Dockerfile Path:** `Dockerfile` (the default)
+- **Variables:**
+  ```
+  API_INTERNAL_URL=http://<api-service-private-domain>:8080
+  ```
+- Generate a public domain for this service (**Settings → Networking → Generate Domain**). This is the URL your users hit, and the one you feed back into `App__ClientBaseUrl` / `Cors__AllowedOrigins__0` on the API service above.
+
+### 4. Apply migrations
+
+Migrations are **not** applied automatically on startup (deliberately — see `dotnet ef database update` below). After the first deploy, and after any deploy that adds a migration, run it against the Postgres instance:
+
+```bash
+dotnet ef database update --project src/Infrastructure --startup-project src/Api --connection "<the same connection string you set on the API service, using Postgres's public host/port instead of the private one>"
+```
+
+Railway's Postgres service has a "Connect" tab with the public connection details for exactly this.
+
+### 5. Gate deploys on CI
+
+Both services: **Settings → Deploy Triggers → Wait for CI**. This makes Railway wait for the GitHub Actions checks (see [CI](#ci) below — backend tests, frontend build/lint, and the Docker builds) to pass before deploying, so a broken `master` push never reaches production.
+
+From here, every push to `master` that passes CI redeploys both services automatically — no separate CD workflow needed, Railway's GitHub integration handles it.
+
 ## Features
 
 MVP (v1) scope covers:
@@ -154,3 +211,4 @@ GitHub Actions runs on every push/PR to `main`:
 
 - **Backend:** `dotnet restore` → `dotnet build` → `dotnet test` (.NET 9)
 - **Frontend:** `npm ci` → `npm run lint` → `npm run build` (Node 20, from `client/`)
+- **Docker:** builds both `src/Api/Dockerfile` and `client/Dockerfile` (catches deployment-image breakage before it reaches `master`)
