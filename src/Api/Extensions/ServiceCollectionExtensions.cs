@@ -1,5 +1,6 @@
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.HttpLogging;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 
@@ -38,9 +39,15 @@ public static class ServiceCollectionExtensions
             options.AddPolicy(CorsPolicyName, policy =>
             {
                 policy.WithOrigins(allowedOrigins)
-                    .AllowAnyHeader()
-                    .AllowAnyMethod();
+                    .WithHeaders("Content-Type", "Authorization")
+                    .WithMethods("GET", "POST", "PUT", "DELETE");
             });
+        });
+
+        services.AddHttpLogging(options =>
+        {
+            options.LoggingFields = HttpLoggingFields.RequestMethod | HttpLoggingFields.RequestPath |
+                                     HttpLoggingFields.ResponseStatusCode | HttpLoggingFields.Duration;
         });
 
         var jwtSection = configuration.GetSection("Jwt");

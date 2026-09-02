@@ -1,4 +1,5 @@
 using Application.Common.Interfaces;
+using Infrastructure.HealthChecks;
 using Infrastructure.Persistence;
 using Infrastructure.Persistence.Interceptors;
 using Infrastructure.Repositories;
@@ -35,6 +36,9 @@ public static class DependencyInjection
         services.AddSingleton<IPasswordHasher, PasswordHasher>();
         services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();
         services.AddScoped<IEmailSender, LoggingEmailSender>();
+
+        services.AddHealthChecks()
+            .AddCheck<DatabaseHealthCheck>("database", tags: new[] { "ready" });
 
         return services;
     }
