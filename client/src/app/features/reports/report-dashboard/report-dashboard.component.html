@@ -1,0 +1,50 @@
+<section class="page">
+  <header class="page-header">
+    <h1>Reports</h1>
+    <input type="month" [formControl]="monthControl" (change)="onMonthChange()" />
+  </header>
+
+  @if (error()) {
+    <p class="error">{{ error() }}</p>
+  }
+
+  @if (loading()) {
+    <p>Loading&hellip;</p>
+  } @else {
+    @if (summary(); as summary) {
+      <div class="summary-cards">
+        <div class="summary-card">
+          <span class="summary-label">Income</span>
+          <span class="summary-value positive">{{ summary.totalIncome | number: '1.2-2' }}</span>
+        </div>
+        <div class="summary-card">
+          <span class="summary-label">Expenses</span>
+          <span class="summary-value negative">{{ summary.totalExpense | number: '1.2-2' }}</span>
+        </div>
+        <div class="summary-card">
+          <span class="summary-label">Net</span>
+          <span class="summary-value" [class.positive]="summary.netPosition >= 0" [class.negative]="summary.netPosition < 0">
+            {{ summary.netPosition | number: '1.2-2' }}
+          </span>
+        </div>
+      </div>
+    }
+
+    <h2>Spend by Category</h2>
+    @if (categorySpend().length === 0) {
+      <p class="empty">No expenses recorded for this month.</p>
+    } @else {
+      <div class="spend-chart">
+        @for (category of categorySpend(); track category.categoryId) {
+          <div class="spend-row">
+            <span class="spend-label">{{ category.categoryName }}</span>
+            <div class="spend-bar-track">
+              <div class="spend-bar-fill" [style.width.%]="barWidth(category.totalSpent)"></div>
+            </div>
+            <span class="spend-amount">{{ category.totalSpent | number: '1.2-2' }}</span>
+          </div>
+        }
+      </div>
+    }
+  }
+</section>

@@ -1,0 +1,89 @@
+<section class="page">
+  <header class="page-header">
+    <h1>Budgets</h1>
+    <div class="header-controls">
+      <input type="month" [formControl]="monthControl" (change)="onMonthChange()" />
+      <button type="button" class="btn btn-primary" (click)="toggleAdd()">
+        {{ adding() ? 'Cancel' : 'New Budget' }}
+      </button>
+    </div>
+  </header>
+
+  @if (error()) {
+    <p class="error">{{ error() }}</p>
+  }
+
+  @if (adding()) {
+    <form class="form inline-form" [formGroup]="createForm" (ngSubmit)="addBudget()">
+      <div class="form-field">
+        <label for="new-category">Category</label>
+        <select id="new-category" formControlName="categoryId">
+          <option value="" disabled>Select a category</option>
+          @for (category of availableCategories(); track category.id) {
+            <option [value]="category.id">{{ category.name }}</option>
+          }
+        </select>
+        @if (availableCategories().length === 0) {
+          <span class="hint">Every category already has a budget this month.</span>
+        }
+      </div>
+
+      <div class="form-field">
+        <label for="new-amount">Budgeted amount</label>
+        <input id="new-amount" type="number" step="0.01" formControlName="amount" />
+      </div>
+
+      <div class="form-actions">
+        <button type="submit" class="btn btn-primary">Add Budget</button>
+      </div>
+    </form>
+  }
+
+  @if (loading()) {
+    <p>Loading&hellip;</p>
+  } @else if (budgets().length === 0) {
+    <p class="empty">No budgets set for this month.</p>
+  } @else {
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Category</th>
+          <th class="numeric">Budgeted</th>
+          <th class="numeric">Spent</th>
+          <th>% Used</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (budget of budgets(); track budget.id) {
+          <tr>
+            <td>{{ budget.categoryName }}</td>
+            <td class="numeric">
+              @if (editingId() === budget.id) {
+                <input type="number" step="0.01" class="inline-input" [formControl]="editAmount" />
+              } @else {
+                {{ budget.budgetedAmount | number: '1.2-2' }}
+              }
+            </td>
+            <td class="numeric">{{ budget.actualSpent | number: '1.2-2' }}</td>
+            <td>
+              <div class="progress-track" [class.over-budget]="budget.percentageUsed > 100">
+                <div class="progress-fill" [style.width.%]="budget.percentageUsed > 100 ? 100 : budget.percentageUsed"></div>
+              </div>
+              <span class="progress-label">{{ budget.percentageUsed | number: '1.0-0' }}%</span>
+            </td>
+            <td class="actions">
+              @if (editingId() === budget.id) {
+                <button type="button" class="link-button" [disabled]="savingEdit()" (click)="saveEdit(budget)">Save</button>
+                <button type="button" class="link-button" (click)="cancelEdit()">Cancel</button>
+              } @else {
+                <button type="button" class="link-button" (click)="startEdit(budget)">Edit</button>
+                <button type="button" class="link-button danger" (click)="deleteBudget(budget)">Delete</button>
+              }
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  }
+</section>
