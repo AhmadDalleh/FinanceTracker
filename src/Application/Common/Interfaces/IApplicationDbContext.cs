@@ -8,6 +8,7 @@ public interface IApplicationDbContext
     IQueryable<Category> Categories { get; }
     IQueryable<Transaction> Transactions { get; }
     IQueryable<Budget> Budgets { get; }
+    IQueryable<User> Users { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken);
 }

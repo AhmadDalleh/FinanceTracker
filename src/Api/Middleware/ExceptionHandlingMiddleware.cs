@@ -38,6 +38,7 @@ public class ExceptionHandlingMiddleware
                 new Dictionary<string, object?> { ["errors"] = validationException.Errors }),
             NotFoundException => (HttpStatusCode.NotFound, exception.Message, null),
             ForbiddenAccessException => (HttpStatusCode.Forbidden, exception.Message, null),
+            InvalidCredentialsException => (HttpStatusCode.Unauthorized, exception.Message, null),
             _ => (HttpStatusCode.InternalServerError, "An unexpected error occurred.", null)
         };
 

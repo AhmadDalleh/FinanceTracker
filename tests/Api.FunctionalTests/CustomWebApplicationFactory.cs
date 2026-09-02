@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Api.FunctionalTests;
@@ -16,6 +17,17 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         _connection.Open();
+
+        // The checked-in appsettings.json intentionally ships an empty Jwt:Key
+        // (it's a secret) - JwtTokenGenerator throws immediately when signing
+        // with a zero-length key, so tests need their own test-only value.
+        builder.ConfigureAppConfiguration((_, config) =>
+        {
+            config.AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["Jwt:Key"] = "test-only-signing-key-not-a-real-secret-0123456789"
+            });
+        });
 
         builder.ConfigureServices(services =>
         {

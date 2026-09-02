@@ -15,11 +15,13 @@ public class ApplicationDbContext : DbContext, IApplicationDbContext
     public DbSet<Category> Categories => Set<Category>();
     public DbSet<Transaction> Transactions => Set<Transaction>();
     public DbSet<Budget> Budgets => Set<Budget>();
+    public DbSet<User> Users => Set<User>();
 
     IQueryable<Account> IApplicationDbContext.Accounts => Accounts;
     IQueryable<Category> IApplicationDbContext.Categories => Categories;
     IQueryable<Transaction> IApplicationDbContext.Transactions => Transactions;
     IQueryable<Budget> IApplicationDbContext.Budgets => Budgets;
+    IQueryable<User> IApplicationDbContext.Users => Users;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
