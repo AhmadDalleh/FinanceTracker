@@ -26,6 +26,13 @@ public class GetCategoriesQueryHandlerTests : IAsyncLifetime
     public async Task InitializeAsync()
     {
         await using var context = _fixture.CreateContext();
+        // Transactions and Budgets both FK-reference Categories with
+        // DeleteBehavior.Restrict, so they must go first - other test
+        // classes sharing this same Postgres container may have left rows
+        // behind that still reference categories this cleanup is about to
+        // remove.
+        context.Transactions.RemoveRange(context.Transactions);
+        context.Budgets.RemoveRange(context.Budgets);
         context.Categories.RemoveRange(context.Categories);
         await context.SaveChangesAsync();
     }
