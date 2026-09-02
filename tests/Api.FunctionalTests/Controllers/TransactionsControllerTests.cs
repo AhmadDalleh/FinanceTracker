@@ -160,4 +160,39 @@ public class TransactionsControllerTests : IClassFixture<CustomWebApplicationFac
         var body = await response.Content.ReadAsStringAsync();
         Assert.Contains(accountId.ToString(), body, StringComparison.OrdinalIgnoreCase);
     }
+
+    [Fact]
+    public async Task GetById_AfterCreating_ReturnsIt()
+    {
+        var accountId = await CreateAccountAsync();
+        var categoryId = SeedCategory();
+
+        var createResponse = await _client.PostAsJsonAsync("/api/Transactions", new CreateTransactionCommand
+        {
+            AccountId = accountId,
+            CategoryId = categoryId,
+            Amount = 42m,
+            Type = TransactionType.Expense,
+            Date = new DateOnly(2026, 1, 25),
+            Note = "Lookup me"
+        });
+        var transactionId = await createResponse.Content.ReadFromJsonAsync<Guid>();
+
+        var response = await _client.GetAsync($"/api/Transactions/{transactionId}");
+        response.EnsureSuccessStatusCode();
+
+        var transaction = await response.Content.ReadFromJsonAsync<TransactionDto>();
+        Assert.NotNull(transaction);
+        Assert.Equal(transactionId, transaction!.Id);
+        Assert.Equal(42m, transaction.Amount);
+        Assert.Equal("Lookup me", transaction.Note);
+    }
+
+    [Fact]
+    public async Task GetById_WithUnknownId_ReturnsNotFound()
+    {
+        var response = await _client.GetAsync($"/api/Transactions/{Guid.NewGuid()}");
+
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+    }
 }
