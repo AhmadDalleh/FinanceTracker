@@ -63,5 +63,17 @@ export const routes: Routes = [
         (m) => m.TransactionFormComponent
       )
   },
+  {
+    path: 'budgets',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./features/budgets/budget-list/budget-list.component').then((m) => m.BudgetListComponent)
+  },
+  {
+    path: 'reports',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./features/reports/report-dashboard/report-dashboard.component').then((m) => m.ReportDashboardComponent)
+  },
   { path: '**', redirectTo: 'accounts' }
 ];
