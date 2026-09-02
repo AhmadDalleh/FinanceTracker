@@ -1,6 +1,8 @@
 using Application.Features.Auth;
+using Application.Features.Auth.Commands.ForgotPassword;
 using Application.Features.Auth.Commands.Login;
 using Application.Features.Auth.Commands.Register;
+using Application.Features.Auth.Commands.ResetPassword;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -29,5 +31,19 @@ public class AuthController : ControllerBase
     public async Task<ActionResult<AuthResultDto>> Login(LoginCommand command)
     {
         return Ok(await _mediator.Send(command));
+    }
+
+    [HttpPost("forgot-password")]
+    public async Task<IActionResult> ForgotPassword(ForgotPasswordCommand command)
+    {
+        await _mediator.Send(command);
+        return NoContent();
+    }
+
+    [HttpPost("reset-password")]
+    public async Task<IActionResult> ResetPassword(ResetPasswordCommand command)
+    {
+        await _mediator.Send(command);
+        return NoContent();
     }
 }

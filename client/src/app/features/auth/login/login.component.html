@@ -1,6 +1,10 @@
 <section class="page auth-page">
   <h1>Log In</h1>
 
+  @if (passwordResetSuccess()) {
+    <p class="success">Your password has been reset. Log in with your new password.</p>
+  }
+
   @if (error()) {
     <p class="error">{{ error() }}</p>
   }
@@ -17,6 +21,7 @@
     <div class="form-field">
       <label for="password">Password</label>
       <input id="password" type="password" formControlName="password" autocomplete="current-password" />
+      <a class="forgot-link" routerLink="/forgot-password">Forgot password?</a>
     </div>
 
     <div class="form-actions">

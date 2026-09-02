@@ -1,3 +1,4 @@
+using Application.Common.Interfaces;
 using Infrastructure.Persistence;
 using Infrastructure.Persistence.Interceptors;
 using Microsoft.AspNetCore.Authentication;
@@ -7,6 +8,7 @@ using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace Api.FunctionalTests;
 
@@ -55,8 +57,14 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
 
             services.AddAuthentication(TestAuthHandler.SchemeName)
                 .AddScheme<AuthenticationSchemeOptions, TestAuthHandler>(TestAuthHandler.SchemeName, _ => { });
+
+            services.RemoveAll<IEmailSender>();
+            services.AddSingleton<TestEmailSender>();
+            services.AddSingleton<IEmailSender>(provider => provider.GetRequiredService<TestEmailSender>());
         });
     }
+
+    public TestEmailSender EmailSender => Services.GetRequiredService<TestEmailSender>();
 
     public void EnsureDatabaseCreated()
     {

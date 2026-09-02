@@ -2,7 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable, computed, signal } from '@angular/core';
 import { Observable, tap } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { AuthResult, LoginRequest, RegisterRequest } from '../models/auth.model';
+import { AuthResult, ForgotPasswordRequest, LoginRequest, RegisterRequest, ResetPasswordRequest } from '../models/auth.model';
 
 const TOKEN_KEY = 'access_token';
 const EMAIL_KEY = 'auth_email';
@@ -23,6 +23,14 @@ export class AuthService {
 
   login(request: LoginRequest): Observable<AuthResult> {
     return this.http.post<AuthResult>(`${this.baseUrl}/login`, request).pipe(tap((result) => this.storeSession(result)));
+  }
+
+  forgotPassword(request: ForgotPasswordRequest): Observable<void> {
+    return this.http.post<void>(`${this.baseUrl}/forgot-password`, request);
+  }
+
+  resetPassword(request: ResetPasswordRequest): Observable<void> {
+    return this.http.post<void>(`${this.baseUrl}/reset-password`, request);
   }
 
   logout(): void {
