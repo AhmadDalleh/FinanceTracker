@@ -1,4 +1,5 @@
 using Application.Common.Interfaces;
+using Application.Common.Security;
 using Domain.Entities;
 using MediatR;
 using ValidationException = Application.Common.Exceptions.ValidationException;
@@ -8,20 +9,26 @@ namespace Application.Features.Auth.Commands.Register;
 public class RegisterCommandHandler : IRequestHandler<RegisterCommand, AuthResultDto>
 {
     private readonly IUserRepository _userRepository;
+    private readonly IRefreshTokenRepository _refreshTokenRepository;
     private readonly IApplicationDbContext _context;
     private readonly IPasswordHasher _passwordHasher;
     private readonly IJwtTokenGenerator _jwtTokenGenerator;
+    private readonly IDateTimeProvider _dateTimeProvider;
 
     public RegisterCommandHandler(
         IUserRepository userRepository,
+        IRefreshTokenRepository refreshTokenRepository,
         IApplicationDbContext context,
         IPasswordHasher passwordHasher,
-        IJwtTokenGenerator jwtTokenGenerator)
+        IJwtTokenGenerator jwtTokenGenerator,
+        IDateTimeProvider dateTimeProvider)
     {
         _userRepository = userRepository;
+        _refreshTokenRepository = refreshTokenRepository;
         _context = context;
         _passwordHasher = passwordHasher;
         _jwtTokenGenerator = jwtTokenGenerator;
+        _dateTimeProvider = dateTimeProvider;
     }
 
     public async Task<AuthResultDto> Handle(RegisterCommand request, CancellationToken cancellationToken)
@@ -45,6 +52,10 @@ public class RegisterCommandHandler : IRequestHandler<RegisterCommand, AuthResul
         };
 
         await _userRepository.AddAsync(user, cancellationToken);
+
+        var (refreshToken, rawRefreshToken) = RefreshTokenFactory.Create(user.Id, _dateTimeProvider.UtcNow);
+        await _refreshTokenRepository.AddAsync(refreshToken, cancellationToken);
+
         await _context.SaveChangesAsync(cancellationToken);
 
         var (token, expiresAt) = _jwtTokenGenerator.GenerateToken(user);
@@ -53,6 +64,7 @@ public class RegisterCommandHandler : IRequestHandler<RegisterCommand, AuthResul
         {
             Token = token,
             ExpiresAt = expiresAt,
+            RefreshToken = rawRefreshToken,
             UserId = user.Id,
             Email = user.Email
         };

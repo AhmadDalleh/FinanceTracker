@@ -22,7 +22,8 @@ public class JwtTokenGenerator : IJwtTokenGenerator
         var jwtSection = _configuration.GetSection("Jwt");
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSection["Key"] ?? string.Empty));
         var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
-        var expiresAt = DateTimeOffset.UtcNow.AddHours(8);
+        var accessTokenMinutes = int.TryParse(jwtSection["AccessTokenMinutes"], out var minutes) ? minutes : 15;
+        var expiresAt = DateTimeOffset.UtcNow.AddMinutes(accessTokenMinutes);
 
         var claims = new[]
         {

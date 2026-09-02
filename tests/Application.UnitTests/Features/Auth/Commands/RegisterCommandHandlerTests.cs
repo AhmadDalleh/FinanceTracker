@@ -10,18 +10,23 @@ namespace Application.UnitTests.Features.Auth.Commands;
 public class RegisterCommandHandlerTests
 {
     private readonly Mock<IUserRepository> _userRepository = new();
+    private readonly Mock<IRefreshTokenRepository> _refreshTokenRepository = new();
     private readonly Mock<IApplicationDbContext> _context = new();
     private readonly Mock<IPasswordHasher> _passwordHasher = new();
     private readonly Mock<IJwtTokenGenerator> _jwtTokenGenerator = new();
+    private readonly Mock<IDateTimeProvider> _dateTimeProvider = new();
     private readonly RegisterCommandHandler _handler;
 
     public RegisterCommandHandlerTests()
     {
+        _dateTimeProvider.Setup(p => p.UtcNow).Returns(DateTimeOffset.UtcNow);
         _handler = new RegisterCommandHandler(
             _userRepository.Object,
+            _refreshTokenRepository.Object,
             _context.Object,
             _passwordHasher.Object,
-            _jwtTokenGenerator.Object);
+            _jwtTokenGenerator.Object,
+            _dateTimeProvider.Object);
     }
 
     [Fact]
@@ -29,7 +34,7 @@ public class RegisterCommandHandlerTests
     {
         _userRepository.Setup(r => r.ExistsByEmailAsync("user@example.com", It.IsAny<CancellationToken>())).ReturnsAsync(false);
         _passwordHasher.Setup(h => h.Hash("Password1")).Returns("hashed");
-        var expiresAt = DateTimeOffset.UtcNow.AddHours(8);
+        var expiresAt = DateTimeOffset.UtcNow.AddMinutes(15);
         _jwtTokenGenerator.Setup(g => g.GenerateToken(It.IsAny<User>())).Returns(("token", expiresAt));
 
         var result = await _handler.Handle(
@@ -38,9 +43,11 @@ public class RegisterCommandHandlerTests
 
         Assert.Equal("token", result.Token);
         Assert.Equal("user@example.com", result.Email);
+        Assert.False(string.IsNullOrWhiteSpace(result.RefreshToken));
         _userRepository.Verify(r => r.AddAsync(
             It.Is<User>(u => u.Email == "user@example.com" && u.PasswordHash == "hashed"),
             It.IsAny<CancellationToken>()), Times.Once);
+        _refreshTokenRepository.Verify(r => r.AddAsync(It.IsAny<RefreshToken>(), It.IsAny<CancellationToken>()), Times.Once);
         _context.Verify(c => c.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 

@@ -17,6 +17,7 @@ public class ApplicationDbContext : DbContext, IApplicationDbContext
     public DbSet<Budget> Budgets => Set<Budget>();
     public DbSet<User> Users => Set<User>();
     public DbSet<PasswordResetToken> PasswordResetTokens => Set<PasswordResetToken>();
+    public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
 
     IQueryable<Account> IApplicationDbContext.Accounts => Accounts;
     IQueryable<Category> IApplicationDbContext.Categories => Categories;
@@ -24,6 +25,7 @@ public class ApplicationDbContext : DbContext, IApplicationDbContext
     IQueryable<Budget> IApplicationDbContext.Budgets => Budgets;
     IQueryable<User> IApplicationDbContext.Users => Users;
     IQueryable<PasswordResetToken> IApplicationDbContext.PasswordResetTokens => PasswordResetTokens;
+    IQueryable<RefreshToken> IApplicationDbContext.RefreshTokens => RefreshTokens;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

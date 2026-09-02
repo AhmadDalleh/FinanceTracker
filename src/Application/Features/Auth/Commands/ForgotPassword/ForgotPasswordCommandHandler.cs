@@ -1,4 +1,3 @@
-using System.Security.Cryptography;
 using Application.Common.Interfaces;
 using Application.Common.Security;
 using Domain.Entities;
@@ -40,12 +39,12 @@ public class ForgotPasswordCommandHandler : IRequestHandler<ForgotPasswordComman
             return;
         }
 
-        var rawToken = GenerateRawToken();
+        var rawToken = SecureTokenGenerator.GenerateUrlSafeToken();
         var token = new PasswordResetToken
         {
             Id = Guid.NewGuid(),
             UserId = user.Id,
-            TokenHash = PasswordResetTokenHasher.Hash(rawToken),
+            TokenHash = SecureTokenHasher.Hash(rawToken),
             ExpiresAt = _dateTimeProvider.UtcNow.AddHours(TokenValidityHours),
             CreatedAt = _dateTimeProvider.UtcNow
         };
@@ -55,10 +54,4 @@ public class ForgotPasswordCommandHandler : IRequestHandler<ForgotPasswordComman
 
         await _emailSender.SendPasswordResetEmailAsync(user.Email, rawToken, cancellationToken);
     }
-
-    private static string GenerateRawToken() =>
-        Convert.ToBase64String(RandomNumberGenerator.GetBytes(32))
-            .Replace('+', '-')
-            .Replace('/', '_')
-            .TrimEnd('=');
 }

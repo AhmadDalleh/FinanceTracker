@@ -3,6 +3,8 @@ using System.Net.Http.Json;
 using Application.Features.Auth;
 using Application.Features.Auth.Commands.ForgotPassword;
 using Application.Features.Auth.Commands.Login;
+using Application.Features.Auth.Commands.Logout;
+using Application.Features.Auth.Commands.RefreshToken;
 using Application.Features.Auth.Commands.Register;
 using Application.Features.Auth.Commands.ResetPassword;
 using Xunit;
@@ -75,6 +77,7 @@ public class AuthControllerTests : IClassFixture<CustomWebApplicationFactory>
         var result = await response.Content.ReadFromJsonAsync<AuthResultDto>();
         Assert.NotNull(result);
         Assert.Equal(email, result!.Email);
+        Assert.False(string.IsNullOrWhiteSpace(result.RefreshToken));
     }
 
     [Fact]
@@ -177,5 +180,72 @@ public class AuthControllerTests : IClassFixture<CustomWebApplicationFactory>
         });
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Refresh_WithValidToken_ReturnsNewTokenPair()
+    {
+        var email = $"{Guid.NewGuid()}@example.com";
+        var registerResponse = await _client.PostAsJsonAsync("/api/Auth/register", new RegisterCommand { Email = email, Password = "Password1" });
+        var registerResult = await registerResponse.Content.ReadFromJsonAsync<AuthResultDto>();
+
+        var response = await _client.PostAsJsonAsync("/api/Auth/refresh", new RefreshTokenCommand
+        {
+            RefreshToken = registerResult!.RefreshToken
+        });
+        response.EnsureSuccessStatusCode();
+
+        var result = await response.Content.ReadFromJsonAsync<AuthResultDto>();
+        Assert.NotNull(result);
+        Assert.False(string.IsNullOrWhiteSpace(result!.Token));
+        Assert.NotEqual(registerResult.Token, result.Token);
+        Assert.NotEqual(registerResult.RefreshToken, result.RefreshToken);
+    }
+
+    [Fact]
+    public async Task Refresh_WithAlreadyUsedToken_ReturnsBadRequest()
+    {
+        var email = $"{Guid.NewGuid()}@example.com";
+        var registerResponse = await _client.PostAsJsonAsync("/api/Auth/register", new RegisterCommand { Email = email, Password = "Password1" });
+        var registerResult = await registerResponse.Content.ReadFromJsonAsync<AuthResultDto>();
+        var command = new RefreshTokenCommand { RefreshToken = registerResult!.RefreshToken };
+
+        await _client.PostAsJsonAsync("/api/Auth/refresh", command);
+        var secondAttempt = await _client.PostAsJsonAsync("/api/Auth/refresh", command);
+
+        Assert.Equal(HttpStatusCode.BadRequest, secondAttempt.StatusCode);
+    }
+
+    [Fact]
+    public async Task Refresh_WithInvalidToken_ReturnsBadRequest()
+    {
+        var response = await _client.PostAsJsonAsync("/api/Auth/refresh", new RefreshTokenCommand
+        {
+            RefreshToken = "not-a-real-token"
+        });
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Logout_WithValidToken_RevokesItSoItCanNoLongerBeRefreshed()
+    {
+        var email = $"{Guid.NewGuid()}@example.com";
+        var registerResponse = await _client.PostAsJsonAsync("/api/Auth/register", new RegisterCommand { Email = email, Password = "Password1" });
+        var registerResult = await registerResponse.Content.ReadFromJsonAsync<AuthResultDto>();
+
+        var logoutResponse = await _client.PostAsJsonAsync("/api/Auth/logout", new LogoutCommand { RefreshToken = registerResult!.RefreshToken });
+        Assert.Equal(HttpStatusCode.NoContent, logoutResponse.StatusCode);
+
+        var refreshAfterLogout = await _client.PostAsJsonAsync("/api/Auth/refresh", new RefreshTokenCommand { RefreshToken = registerResult.RefreshToken });
+        Assert.Equal(HttpStatusCode.BadRequest, refreshAfterLogout.StatusCode);
+    }
+
+    [Fact]
+    public async Task Logout_WithUnknownToken_ReturnsNoContent()
+    {
+        var response = await _client.PostAsJsonAsync("/api/Auth/logout", new LogoutCommand { RefreshToken = "not-a-real-token" });
+
+        Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
     }
 }
