@@ -32,4 +32,22 @@ public class UpdateBudgetCommandValidatorTests
         Assert.False(result.IsValid);
         Assert.Contains(result.Errors, e => e.PropertyName == nameof(UpdateBudgetCommand.Amount));
     }
+
+    [Fact]
+    public void Validate_WithAmountTooLarge_HasError()
+    {
+        var result = _validator.Validate(new UpdateBudgetCommand { Id = Guid.NewGuid(), Amount = 1_000_000_000_000m });
+
+        Assert.False(result.IsValid);
+        Assert.Contains(result.Errors, e => e.PropertyName == nameof(UpdateBudgetCommand.Amount));
+    }
+
+    [Fact]
+    public void Validate_WithMoreThanTwoDecimalPlaces_HasError()
+    {
+        var result = _validator.Validate(new UpdateBudgetCommand { Id = Guid.NewGuid(), Amount = 10.001m });
+
+        Assert.False(result.IsValid);
+        Assert.Contains(result.Errors, e => e.PropertyName == nameof(UpdateBudgetCommand.Amount));
+    }
 }

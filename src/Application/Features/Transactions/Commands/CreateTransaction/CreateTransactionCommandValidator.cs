@@ -1,3 +1,4 @@
+using Application.Common.Validation;
 using FluentValidation;
 
 namespace Application.Features.Transactions.Commands.CreateTransaction;
@@ -14,7 +15,11 @@ public class CreateTransactionCommandValidator : AbstractValidator<CreateTransac
 
         RuleFor(x => x.Amount)
             .GreaterThan(0)
-            .WithMessage("Amount must be positive; the transaction type determines whether it is a debit or credit.");
+            .WithMessage("Amount must be positive; the transaction type determines whether it is a debit or credit.")
+            .LessThanOrEqualTo(MoneyLimits.MaxAmount)
+            .WithMessage($"Amount cannot exceed {MoneyLimits.MaxAmount:N2}.")
+            .Must(MoneyLimits.HasAtMostTwoDecimalPlaces)
+            .WithMessage("Amount cannot have more than 2 decimal places.");
 
         RuleFor(x => x.Type)
             .IsInEnum();

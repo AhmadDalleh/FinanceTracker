@@ -1,3 +1,4 @@
+import { DecimalPipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -5,11 +6,12 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ACCOUNT_TYPE_LABELS, AccountType } from '../../../core/models/account.model';
 import { AccountService } from '../../../core/services/account.service';
 import { extractErrorMessage } from '../../../core/utils/error-message';
+import { MAX_MONEY_AMOUNT, atMostTwoDecimalPlaces } from '../../../core/utils/money-validators';
 
 @Component({
   selector: 'app-account-form',
   standalone: true,
-  imports: [ReactiveFormsModule, RouterLink],
+  imports: [ReactiveFormsModule, RouterLink, DecimalPipe],
   templateUrl: './account-form.component.html',
   styleUrl: './account-form.component.scss'
 })
@@ -26,13 +28,14 @@ export class AccountFormComponent implements OnInit {
   readonly saving = signal(false);
   readonly error = signal<string | null>(null);
   readonly isEditMode = signal(false);
+  readonly maxAmount = MAX_MONEY_AMOUNT;
 
   private accountId: string | null = null;
 
   readonly form = this.fb.nonNullable.group({
     name: ['', [Validators.required, Validators.maxLength(100)]],
     type: [AccountType.Checking, Validators.required],
-    startingBalance: [0, [Validators.required, Validators.min(0)]],
+    startingBalance: [0, [Validators.required, Validators.min(0), Validators.max(MAX_MONEY_AMOUNT), atMostTwoDecimalPlaces]],
     currency: ['USD', [Validators.required, Validators.minLength(3), Validators.maxLength(3)]]
   });
 

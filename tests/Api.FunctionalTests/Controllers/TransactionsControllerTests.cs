@@ -1,5 +1,6 @@
 using System.Net;
 using System.Net.Http.Json;
+using System.Text;
 using Application.Features.Accounts.Commands.CreateAccount;
 using Application.Features.Transactions;
 using Application.Features.Transactions.Commands.CreateTransaction;
@@ -87,6 +88,52 @@ public class TransactionsControllerTests : IClassFixture<CustomWebApplicationFac
             AccountId = accountId,
             CategoryId = categoryId,
             Amount = 0m,
+            Type = TransactionType.Expense,
+            Date = new DateOnly(2026, 1, 15)
+        };
+
+        var response = await _client.PostAsJsonAsync("/api/Transactions", command);
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Create_WithMalformedTypeValue_ReturnsFriendlyErrorWithoutLeakingInternalDetails()
+    {
+        var accountId = await CreateAccountAsync();
+        var categoryId = SeedCategory();
+
+        var json = $$"""
+        {
+            "accountId": "{{accountId}}",
+            "categoryId": "{{categoryId}}",
+            "amount": 30,
+            "type": "not-a-real-type",
+            "date": "2026-01-15"
+        }
+        """;
+        var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+        var response = await _client.PostAsync("/api/Transactions", content);
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+
+        var body = await response.Content.ReadAsStringAsync();
+        Assert.DoesNotContain("command field", body, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("JsonException", body, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("check your input", body, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public async Task Create_WithAmountTooLarge_ReturnsBadRequest()
+    {
+        var accountId = await CreateAccountAsync();
+        var categoryId = SeedCategory();
+
+        var command = new CreateTransactionCommand
+        {
+            AccountId = accountId,
+            CategoryId = categoryId,
+            Amount = 1_000_000_000_000m,
             Type = TransactionType.Expense,
             Date = new DateOnly(2026, 1, 15)
         };
