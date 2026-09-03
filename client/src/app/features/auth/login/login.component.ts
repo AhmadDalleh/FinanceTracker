@@ -1,7 +1,9 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
+import { extractErrorMessage } from '../../../core/utils/error-message';
 
 @Component({
   selector: 'app-login',
@@ -36,8 +38,8 @@ export class LoginComponent {
 
     this.authService.login(this.form.getRawValue()).subscribe({
       next: () => this.router.navigate(['/accounts']),
-      error: () => {
-        this.error.set('Incorrect email or password.');
+      error: (response: HttpErrorResponse) => {
+        this.error.set(extractErrorMessage(response, 'Incorrect email or password.'));
         this.submitting.set(false);
       }
     });

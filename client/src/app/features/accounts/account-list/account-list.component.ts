@@ -1,8 +1,10 @@
 import { DecimalPipe } from '@angular/common';
+import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { ACCOUNT_TYPE_LABELS, Account } from '../../../core/models/account.model';
 import { AccountService } from '../../../core/services/account.service';
+import { extractErrorMessage } from '../../../core/utils/error-message';
 
 @Component({
   selector: 'app-account-list',
@@ -32,8 +34,8 @@ export class AccountListComponent implements OnInit {
         this.accounts.set(accounts);
         this.loading.set(false);
       },
-      error: () => {
-        this.error.set('Could not load accounts. Are you signed in?');
+      error: (response: HttpErrorResponse) => {
+        this.error.set(extractErrorMessage(response, 'Could not load accounts.'));
         this.loading.set(false);
       }
     });
@@ -46,7 +48,7 @@ export class AccountListComponent implements OnInit {
 
     this.accountService.archive(account.id).subscribe({
       next: () => this.loadAccounts(),
-      error: () => this.error.set('Could not archive the account.')
+      error: (response: HttpErrorResponse) => this.error.set(extractErrorMessage(response, 'Could not archive the account.'))
     });
   }
 }

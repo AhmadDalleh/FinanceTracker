@@ -1,3 +1,4 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -7,6 +8,7 @@ import { TRANSACTION_TYPE_LABELS, TransactionType } from '../../../core/models/t
 import { AccountService } from '../../../core/services/account.service';
 import { CategoryService } from '../../../core/services/category.service';
 import { TransactionService } from '../../../core/services/transaction.service';
+import { extractErrorMessage } from '../../../core/utils/error-message';
 
 @Component({
   selector: 'app-transaction-form',
@@ -67,7 +69,7 @@ export class TransactionFormComponent implements OnInit {
             note: transaction.note ?? ''
           });
         },
-        error: () => this.error.set('Could not load this transaction.')
+        error: (response: HttpErrorResponse) => this.error.set(extractErrorMessage(response, 'Could not load this transaction.'))
       });
     }
   }
@@ -88,7 +90,7 @@ export class TransactionFormComponent implements OnInit {
         this.addingCategory.set(false);
         this.loadCategories(id);
       },
-      error: () => this.error.set('Could not create this category.')
+      error: (response: HttpErrorResponse) => this.error.set(extractErrorMessage(response, 'Could not create this category.'))
     });
   }
 
@@ -103,8 +105,8 @@ export class TransactionFormComponent implements OnInit {
     const value = this.form.getRawValue();
 
     const onSuccess = () => this.router.navigate(['/transactions']);
-    const onError = () => {
-      this.error.set('Could not save this transaction.');
+    const onError = (response: HttpErrorResponse) => {
+      this.error.set(extractErrorMessage(response, 'Could not save this transaction.'));
       this.saving.set(false);
     };
 

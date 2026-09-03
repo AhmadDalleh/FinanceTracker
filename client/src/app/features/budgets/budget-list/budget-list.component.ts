@@ -6,6 +6,7 @@ import { Budget } from '../../../core/models/budget.model';
 import { Category } from '../../../core/models/category.model';
 import { BudgetService } from '../../../core/services/budget.service';
 import { CategoryService } from '../../../core/services/category.service';
+import { extractErrorMessage } from '../../../core/utils/error-message';
 
 @Component({
   selector: 'app-budget-list',
@@ -71,7 +72,7 @@ export class BudgetListComponent implements OnInit {
         this.createForm.reset({ categoryId: '', amount: 0 });
         this.load();
       },
-      error: (response: HttpErrorResponse) => this.error.set(this.extractErrorMessage(response, 'Could not create this budget.'))
+      error: (response: HttpErrorResponse) => this.error.set(extractErrorMessage(response, 'Could not create this budget.'))
     });
   }
 
@@ -99,9 +100,9 @@ export class BudgetListComponent implements OnInit {
         this.editingId.set(null);
         this.load();
       },
-      error: () => {
+      error: (response: HttpErrorResponse) => {
         this.savingEdit.set(false);
-        this.error.set('Could not update this budget.');
+        this.error.set(extractErrorMessage(response, 'Could not update this budget.'));
       }
     });
   }
@@ -113,7 +114,7 @@ export class BudgetListComponent implements OnInit {
 
     this.budgetService.delete(budget.id).subscribe({
       next: () => this.load(),
-      error: () => this.error.set('Could not delete this budget.')
+      error: (response: HttpErrorResponse) => this.error.set(extractErrorMessage(response, 'Could not delete this budget.'))
     });
   }
 
@@ -128,8 +129,8 @@ export class BudgetListComponent implements OnInit {
         this.budgets.set(budgets);
         this.loading.set(false);
       },
-      error: () => {
-        this.error.set('Could not load budgets. Are you signed in?');
+      error: (response: HttpErrorResponse) => {
+        this.error.set(extractErrorMessage(response, 'Could not load budgets.'));
         this.loading.set(false);
       }
     });
@@ -142,11 +143,5 @@ export class BudgetListComponent implements OnInit {
 
   private currentMonth(): string {
     return new Date().toISOString().slice(0, 7);
-  }
-
-  private extractErrorMessage(response: HttpErrorResponse, fallback: string): string {
-    const errors = response.error?.errors as Record<string, string[]> | undefined;
-    const firstMessage = errors ? Object.values(errors)[0]?.[0] : undefined;
-    return firstMessage ?? fallback;
   }
 }

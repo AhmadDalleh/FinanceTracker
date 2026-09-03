@@ -3,6 +3,7 @@ import { Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
+import { extractErrorMessage } from '../../../core/utils/error-message';
 
 @Component({
   selector: 'app-register',
@@ -36,15 +37,9 @@ export class RegisterComponent {
     this.authService.register(this.form.getRawValue()).subscribe({
       next: () => this.router.navigate(['/accounts']),
       error: (response: HttpErrorResponse) => {
-        this.error.set(this.extractErrorMessage(response));
+        this.error.set(extractErrorMessage(response, 'Could not create your account. Please try again.'));
         this.submitting.set(false);
       }
     });
-  }
-
-  private extractErrorMessage(response: HttpErrorResponse): string {
-    const errors = response.error?.errors as Record<string, string[]> | undefined;
-    const firstMessage = errors ? Object.values(errors)[0]?.[0] : undefined;
-    return firstMessage ?? 'Could not create your account. Please try again.';
   }
 }

@@ -3,6 +3,7 @@ import { Component, inject, signal } from '@angular/core';
 import { AbstractControl, FormBuilder, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
+import { extractErrorMessage } from '../../../core/utils/error-message';
 
 function passwordsMatchValidator(control: AbstractControl): ValidationErrors | null {
   const password = control.get('newPassword')?.value;
@@ -56,7 +57,7 @@ export class ResetPasswordComponent {
       .subscribe({
         next: () => this.router.navigate(['/login'], { queryParams: { reset: 'success' } }),
         error: (response: HttpErrorResponse) => {
-          this.error.set(response.error?.title ?? 'Could not reset your password. Please request a new link.');
+          this.error.set(extractErrorMessage(response, 'Could not reset your password. Please request a new link.'));
           this.submitting.set(false);
         }
       });
