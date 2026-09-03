@@ -49,4 +49,26 @@ public class UpdateTransactionCommandValidatorTests
         Assert.False(result.IsValid);
         Assert.Contains(result.Errors, e => e.PropertyName == nameof(UpdateTransactionCommand.Amount));
     }
+
+    [Fact]
+    public void Validate_WithAmountTooLarge_HasError()
+    {
+        var command = ValidCommand() with { Amount = 1_000_000_000_000m };
+
+        var result = _validator.Validate(command);
+
+        Assert.False(result.IsValid);
+        Assert.Contains(result.Errors, e => e.PropertyName == nameof(UpdateTransactionCommand.Amount));
+    }
+
+    [Fact]
+    public void Validate_WithMoreThanTwoDecimalPlaces_HasError()
+    {
+        var command = ValidCommand() with { Amount = 10.001m };
+
+        var result = _validator.Validate(command);
+
+        Assert.False(result.IsValid);
+        Assert.Contains(result.Errors, e => e.PropertyName == nameof(UpdateTransactionCommand.Amount));
+    }
 }

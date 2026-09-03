@@ -58,6 +58,40 @@ public class CreateAccountCommandValidatorTests
         Assert.Contains(result.Errors, e => e.PropertyName == nameof(CreateAccountCommand.StartingBalance));
     }
 
+    [Fact]
+    public void Validate_WithStartingBalanceTooLarge_HasError()
+    {
+        var command = new CreateAccountCommand
+        {
+            Name = "Checking",
+            Type = AccountType.Checking,
+            StartingBalance = 1_000_000_000_000m,
+            Currency = "USD"
+        };
+
+        var result = _validator.Validate(command);
+
+        Assert.False(result.IsValid);
+        Assert.Contains(result.Errors, e => e.PropertyName == nameof(CreateAccountCommand.StartingBalance));
+    }
+
+    [Fact]
+    public void Validate_WithStartingBalanceMoreThanTwoDecimalPlaces_HasError()
+    {
+        var command = new CreateAccountCommand
+        {
+            Name = "Checking",
+            Type = AccountType.Checking,
+            StartingBalance = 100.001m,
+            Currency = "USD"
+        };
+
+        var result = _validator.Validate(command);
+
+        Assert.False(result.IsValid);
+        Assert.Contains(result.Errors, e => e.PropertyName == nameof(CreateAccountCommand.StartingBalance));
+    }
+
     [Theory]
     [InlineData("")]
     [InlineData("US")]

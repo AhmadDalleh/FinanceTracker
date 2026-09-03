@@ -1,3 +1,4 @@
+import { DecimalPipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -9,11 +10,12 @@ import { AccountService } from '../../../core/services/account.service';
 import { CategoryService } from '../../../core/services/category.service';
 import { TransactionService } from '../../../core/services/transaction.service';
 import { extractErrorMessage } from '../../../core/utils/error-message';
+import { MAX_MONEY_AMOUNT, atMostTwoDecimalPlaces } from '../../../core/utils/money-validators';
 
 @Component({
   selector: 'app-transaction-form',
   standalone: true,
-  imports: [ReactiveFormsModule, RouterLink],
+  imports: [ReactiveFormsModule, RouterLink, DecimalPipe],
   templateUrl: './transaction-form.component.html',
   styleUrl: './transaction-form.component.scss'
 })
@@ -35,13 +37,14 @@ export class TransactionFormComponent implements OnInit {
   readonly error = signal<string | null>(null);
   readonly isEditMode = signal(false);
   readonly addingCategory = signal(false);
+  readonly maxAmount = MAX_MONEY_AMOUNT;
 
   private transactionId: string | null = null;
 
   readonly form = this.fb.nonNullable.group({
     accountId: ['', Validators.required],
     categoryId: ['', Validators.required],
-    amount: [0, [Validators.required, Validators.min(0.01)]],
+    amount: [0, [Validators.required, Validators.min(0.01), Validators.max(MAX_MONEY_AMOUNT), atMostTwoDecimalPlaces]],
     type: [TransactionType.Expense, Validators.required],
     date: [this.today(), Validators.required],
     note: ['']

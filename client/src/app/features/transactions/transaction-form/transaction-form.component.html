@@ -56,8 +56,16 @@
     <div class="form-field">
       <label for="amount">Amount</label>
       <input id="amount" type="number" step="0.01" formControlName="amount" />
-      @if (form.controls.amount.invalid && form.controls.amount.touched) {
-        <span class="field-error">Amount must be positive.</span>
+      @if (form.controls.amount.touched) {
+        @if (form.controls.amount.hasError('required')) {
+          <span class="field-error">Enter an amount.</span>
+        } @else if (form.controls.amount.hasError('min')) {
+          <span class="field-error">Amount must be greater than zero.</span>
+        } @else if (form.controls.amount.hasError('max')) {
+          <span class="field-error">Amount cannot exceed {{ maxAmount | number: '1.2-2' }}.</span>
+        } @else if (form.controls.amount.hasError('tooManyDecimals')) {
+          <span class="field-error">Amount cannot have more than 2 decimal places.</span>
+        }
       }
     </div>
 

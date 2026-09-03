@@ -1,6 +1,7 @@
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.HttpLogging;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 
@@ -12,7 +13,37 @@ public static class ServiceCollectionExtensions
 
     public static IServiceCollection AddApiServices(this IServiceCollection services, IConfiguration configuration)
     {
-        services.AddControllers();
+        services.AddControllers()
+            .ConfigureApiBehaviorOptions(options =>
+            {
+                // A malformed request body (e.g. an out-of-range enum, a string where a number
+                // is expected) fails during model binding, before it ever reaches a controller
+                // action or the FluentValidation pipeline. Left at its default, ASP.NET Core's
+                // automatic response leaks internal detail - the action parameter's own name
+                // ("The command field is required.") and raw System.Text.Json parse paths - none
+                // of which tells the user what to fix. Replace it with one clear, actionable
+                // message instead, and log the real detail server-side for us to diagnose.
+                options.InvalidModelStateResponseFactory = context =>
+                {
+                    var logger = context.HttpContext.RequestServices
+                        .GetRequiredService<ILoggerFactory>()
+                        .CreateLogger("Api.InvalidModelState");
+
+                    var detail = string.Join(
+                        "; ",
+                        context.ModelState
+                            .Where(entry => entry.Value?.Errors.Count > 0)
+                            .SelectMany(entry => entry.Value!.Errors.Select(error => $"{entry.Key}: {error.ErrorMessage}")));
+                    logger.LogWarning("Malformed request body for {Path}: {Detail}", context.HttpContext.Request.Path, detail);
+
+                    var problemDetails = new ProblemDetails
+                    {
+                        Title = "We couldn't process your request because one or more values were invalid. Please check your input and try again.",
+                        Status = StatusCodes.Status400BadRequest
+                    };
+                    return new BadRequestObjectResult(problemDetails);
+                };
+            });
 
         services.AddEndpointsApiExplorer();
         services.AddSwaggerGen(options =>

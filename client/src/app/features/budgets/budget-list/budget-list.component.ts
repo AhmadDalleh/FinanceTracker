@@ -7,6 +7,7 @@ import { Category } from '../../../core/models/category.model';
 import { BudgetService } from '../../../core/services/budget.service';
 import { CategoryService } from '../../../core/services/category.service';
 import { extractErrorMessage } from '../../../core/utils/error-message';
+import { MAX_MONEY_AMOUNT, atMostTwoDecimalPlaces } from '../../../core/utils/money-validators';
 
 @Component({
   selector: 'app-budget-list',
@@ -29,12 +30,18 @@ export class BudgetListComponent implements OnInit {
 
   readonly editingId = signal<string | null>(null);
   readonly savingEdit = signal(false);
-  readonly editAmount = this.fb.nonNullable.control(0, [Validators.required, Validators.min(0.01)]);
+  readonly maxAmount = MAX_MONEY_AMOUNT;
+  readonly editAmount = this.fb.nonNullable.control(0, [
+    Validators.required,
+    Validators.min(0.01),
+    Validators.max(MAX_MONEY_AMOUNT),
+    atMostTwoDecimalPlaces
+  ]);
 
   readonly adding = signal(false);
   readonly createForm = this.fb.nonNullable.group({
     categoryId: ['', Validators.required],
-    amount: [0, [Validators.required, Validators.min(0.01)]]
+    amount: [0, [Validators.required, Validators.min(0.01), Validators.max(MAX_MONEY_AMOUNT), atMostTwoDecimalPlaces]]
   });
 
   readonly availableCategories = computed(() => {

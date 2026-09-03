@@ -62,6 +62,30 @@ public class CreateTransactionCommandValidatorTests
     }
 
     [Fact]
+    public void Validate_WithAmountTooLarge_HasError()
+    {
+        var command = ValidCommand() with { Amount = 1_000_000_000_000m };
+
+        var result = _validator.Validate(command);
+
+        Assert.False(result.IsValid);
+        Assert.Contains(result.Errors, e => e.PropertyName == nameof(CreateTransactionCommand.Amount));
+    }
+
+    [Theory]
+    [InlineData(10.001)]
+    [InlineData(10.999)]
+    public void Validate_WithMoreThanTwoDecimalPlaces_HasError(decimal amount)
+    {
+        var command = ValidCommand() with { Amount = amount };
+
+        var result = _validator.Validate(command);
+
+        Assert.False(result.IsValid);
+        Assert.Contains(result.Errors, e => e.PropertyName == nameof(CreateTransactionCommand.Amount));
+    }
+
+    [Fact]
     public void Validate_WithDefaultDate_HasError()
     {
         var command = ValidCommand() with { Date = default };
