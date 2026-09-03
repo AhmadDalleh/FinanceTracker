@@ -1,8 +1,10 @@
 import { DecimalPipe } from '@angular/common';
+import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { CategorySpend, MonthlySummary } from '../../../core/models/report.model';
 import { ReportService } from '../../../core/services/report.service';
+import { extractErrorMessage } from '../../../core/utils/error-message';
 
 @Component({
   selector: 'app-report-dashboard',
@@ -45,7 +47,7 @@ export class ReportDashboardComponent implements OnInit {
 
     this.reportService.getMonthlySummary(year, month).subscribe({
       next: (summary) => this.summary.set(summary),
-      error: () => this.error.set('Could not load the monthly summary. Are you signed in?')
+      error: (response: HttpErrorResponse) => this.error.set(extractErrorMessage(response, 'Could not load the monthly summary.'))
     });
 
     this.reportService.getSpendByCategory(year, month).subscribe({
@@ -53,8 +55,8 @@ export class ReportDashboardComponent implements OnInit {
         this.categorySpend.set(categorySpend);
         this.loading.set(false);
       },
-      error: () => {
-        this.error.set('Could not load spend by category. Are you signed in?');
+      error: (response: HttpErrorResponse) => {
+        this.error.set(extractErrorMessage(response, 'Could not load spend by category.'));
         this.loading.set(false);
       }
     });

@@ -1,4 +1,5 @@
 import { DecimalPipe } from '@angular/common';
+import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
@@ -9,6 +10,7 @@ import { TRANSACTION_TYPE_LABELS, Transaction } from '../../../core/models/trans
 import { AccountService } from '../../../core/services/account.service';
 import { CategoryService } from '../../../core/services/category.service';
 import { TransactionService } from '../../../core/services/transaction.service';
+import { extractErrorMessage } from '../../../core/utils/error-message';
 
 const PAGE_SIZE = 20;
 
@@ -74,7 +76,7 @@ export class TransactionListComponent implements OnInit {
 
     this.transactionService.delete(transaction.id).subscribe({
       next: () => this.load(),
-      error: () => this.error.set('Could not delete this transaction.')
+      error: (response: HttpErrorResponse) => this.error.set(extractErrorMessage(response, 'Could not delete this transaction.'))
     });
   }
 
@@ -99,8 +101,8 @@ export class TransactionListComponent implements OnInit {
           this.result.set(result);
           this.loading.set(false);
         },
-        error: () => {
-          this.error.set('Could not load transactions. Are you signed in?');
+        error: (response: HttpErrorResponse) => {
+          this.error.set(extractErrorMessage(response, 'Could not load transactions.'));
           this.loading.set(false);
         }
       });

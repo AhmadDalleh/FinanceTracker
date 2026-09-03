@@ -1,8 +1,10 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ACCOUNT_TYPE_LABELS, AccountType } from '../../../core/models/account.model';
 import { AccountService } from '../../../core/services/account.service';
+import { extractErrorMessage } from '../../../core/utils/error-message';
 
 @Component({
   selector: 'app-account-form',
@@ -51,7 +53,7 @@ export class AccountFormComponent implements OnInit {
             currency: account.currency
           });
         },
-        error: () => this.error.set('Could not load this account.')
+        error: (response: HttpErrorResponse) => this.error.set(extractErrorMessage(response, 'Could not load this account.'))
       });
     }
   }
@@ -67,8 +69,8 @@ export class AccountFormComponent implements OnInit {
     const value = this.form.getRawValue();
 
     const onSuccess = () => this.router.navigate(['/accounts']);
-    const onError = () => {
-      this.error.set('Could not save this account.');
+    const onError = (response: HttpErrorResponse) => {
+      this.error.set(extractErrorMessage(response, 'Could not save this account.'));
       this.saving.set(false);
     };
 
